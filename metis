@@ -1,0 +1,189 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings FATAL => 'all';
+use feature 'say';
+use utf8;
+use open qw(:std :utf8);
+
+use Carp;
+use JSON::PP;
+use Moment;
+use File::Slurp;
+
+sub true {
+    return 1;
+}
+
+sub false {
+    return 0;
+}
+
+sub get_questions {
+
+    my $questions = [
+        {
+            question => 'январь',
+            answer => 1,
+        },
+        {
+            question => 'февраль',
+            answer => 2,
+        },
+        {
+            question => 'март',
+            answer => 3,
+        },
+        {
+            question => 'апрель',
+            answer => 4,
+        },
+        {
+            question => 'май',
+            answer => 5,
+        },
+        {
+            question => 'июнь',
+            answer => 6,
+        },
+        {
+            question => 'июль',
+            answer => 7,
+        },
+        {
+            question => 'август',
+            answer => 8,
+        },
+        {
+            question => 'сентябрь',
+            answer => 9,
+        },
+        {
+            question => 'октябрь',
+            answer => 10,
+        },
+
+        {
+            question => 'ноябрь',
+            answer => 11,
+        },
+        {
+            question => 'декабрь',
+            answer => 12,
+        },
+    ];
+
+    return $questions;
+}
+
+sub get_random_question {
+    my @questions = @{get_questions()};
+
+    my $random_question = @questions[rand @questions];
+
+    return $random_question;
+}
+
+sub read_answer {
+    print "Enter answer\n> ";
+    my $input = <STDIN>;
+
+    chomp $input;
+    return $input;
+}
+
+sub read_score {
+    my $input = '';
+
+    while (not grep {$input eq $_} qw(2 3 4 5)) {
+        print "Enter score [2,3,4,5] (2 - awful, 5 - perfect)\n> ";
+        $input = <STDIN>;
+
+        chomp $input;
+    }
+
+    return $input;
+}
+
+sub write_record {
+    my (%data) = @_;
+
+    my $question = delete $data{question};
+    croak 'no question' if not defined $question;
+
+    my $answer = delete $data{answer};
+    croak 'no answer' if not defined $answer;
+
+    my $user_answer = delete $data{user_answer};
+    croak 'no user_answer' if not defined $user_answer;
+
+    my $score = delete $data{score};
+    croak 'no score' if not defined $score;
+
+    my $dt_asked = delete $data{dt_asked};
+    croak 'no dt_asked' if not defined $dt_asked;
+
+    my $coder = JSON::PP
+        ->new
+        ->canonical
+        ->indent_length(4)
+        ;
+
+    my $json = $coder->encode({
+        question => $question,
+        answer => $answer,
+        user_answer => $user_answer,
+        score => $score,
+        dt_asked => $dt_asked,
+    });
+
+    write_file(
+        '/Users/bessarabov/Dropbox/git/nano/data/months',
+        {
+            binmode => ':utf8',
+            append => true,
+        },
+        "$json\n",
+    );
+
+}
+
+sub main {
+
+    # TODO:
+    #
+    #  * clear screan
+    #  * record answer time
+
+    my $i = 1;
+    while (true) {
+        say "# $i";
+
+        my $moment_asked = Moment->now();
+        my $question = get_random_question();
+        say $question->{question};
+
+        my $answer = read_answer();
+
+        my $score;
+
+        if ($answer eq $question->{answer}) {
+            $score = read_score();
+        } else {
+            $score = 1;
+        }
+
+        write_record(
+            question => $question->{question},
+            answer => $question->{answer},
+            user_answer => $answer,
+            score => $score,
+            dt_asked => $moment_asked->get_dt(),
+        );
+
+        $i++;
+    }
+
+}
+main();
+__END__
