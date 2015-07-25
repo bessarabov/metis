@@ -10,6 +10,7 @@ use Carp;
 use JSON::PP;
 use Moment;
 use File::Slurp;
+use Term::Cap;
 
 sub true {
     return 1;
@@ -148,15 +149,23 @@ sub write_record {
 
 }
 
+sub clear_screen {
+    # https://stackoverflow.com/questions/4605593/how-do-i-clear-the-screen-in-a-terminal-using-perl
+    my $terminal = Term::Cap->Tgetent( { OSPEED => 9600 } );
+    my $clear_screen = $terminal->Tputs('cl');
+
+    print $clear_screen;
+}
+
 sub main {
 
     # TODO:
     #
-    #  * clear screan
     #  * record answer time
 
     my $i = 1;
     while (true) {
+        clear_screen();
         say "# $i";
 
         my $moment_asked = Moment->now();
